@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en" id="top">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RoastRite — Funny Roast Generator, Roast Battle Game & Comeback Generator</title>
+<meta name="description" content="RoastRite is a free funny roast generator with a roast battle game mode, an intensity slider with safety filter, PNG roast cards, and a comeback generator. No signup, unlimited free usage.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#171219; --pink:#FF4D6D; --gold:#FFC300; }
+  html{ scroll-behavior:smooth; }
+  body{ background:#171219; color:#F5EFE6; font-family:'Inter',system-ui,sans-serif; }
+  .font-neon{ font-family:'Bungee',cursive; }
+  /* Brick wall texture */
+  .brick{
+    background-color:#171219;
+    background-image:
+      linear-gradient(335deg, rgba(255,77,109,.055) 23px, transparent 23px),
+      linear-gradient(155deg, rgba(255,77,109,.055) 23px, transparent 23px),
+      linear-gradient(335deg, rgba(255,77,109,.055) 23px, transparent 23px),
+      linear-gradient(155deg, rgba(255,77,109,.055) 23px, transparent 23px);
+    background-size:58px 58px;
+    background-position:0px 2px, 4px 35px, 29px 31px, 34px 6px;
+  }
+  /* Spotlight beams */
+  .beam{
+    position:absolute; top:-140px; width:300px; height:640px; pointer-events:none;
+    background:linear-gradient(to bottom, rgba(255,195,0,.13), rgba(255,195,0,.03) 55%, transparent 75%);
+    clip-path:polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+    filter:blur(4px);
+  }
+  /* Neon signs */
+  .neon-pink{ color:#FF4D6D; text-shadow:0 0 6px #FF4D6D, 0 0 22px #FF4D6D, 0 0 70px rgba(255,77,109,.8); }
+  .neon-gold{ color:#FFC300; text-shadow:0 0 6px #FFC300, 0 0 20px rgba(255,195,0,.9), 0 0 60px rgba(255,195,0,.5); }
+  .neon-flicker{ animation:flick 4.2s infinite; }
+  @keyframes flick{
+    0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.55} 94%{opacity:1} 96%{opacity:.7} 97%{opacity:1}
+  }
+  .neon-outline{
+    color:transparent; -webkit-text-stroke:2px var(--pink);
+    text-shadow:0 0 26px rgba(255,77,109,.55);
+  }
+  /* Marquee */
+  .marquee{ overflow:hidden; white-space:nowrap; }
+  .marquee-track{ display:inline-block; animation:scrollx 22s linear infinite; }
+  @keyframes scrollx{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .bulb{ width:10px; height:10px; border-radius:9999px; background:var(--gold);
+    box-shadow:0 0 8px var(--gold), 0 0 16px rgba(255,195,0,.7); animation:bulbchase 1.6s infinite; }
+  @keyframes bulbchase{ 0%,100%{opacity:1} 50%{opacity:.35} }
+  /* Stage card */
+  .stage-card{
+    background:linear-gradient(160deg, #221724 0%, #1a121d 60%, #171219 100%);
+    border:1px solid rgba(255,77,109,.35);
+    box-shadow:0 0 0 1px rgba(0,0,0,.6), 0 18px 50px rgba(0,0,0,.55), inset 0 0 60px rgba(255,77,109,.06);
+  }
+  .gold-frame{ border:1px solid rgba(255,195,0,.5); box-shadow:0 0 24px rgba(255,195,0,.15), inset 0 0 40px rgba(255,195,0,.05); }
+  .btn-roast{
+    background:linear-gradient(135deg,#FF4D6D,#ff2e57);
+    box-shadow:0 6px 24px rgba(255,77,109,.45), inset 0 1px 0 rgba(255,255,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-roast:hover{ transform:translateY(-2px); box-shadow:0 10px 30px rgba(255,77,109,.6), inset 0 1px 0 rgba(255,255,255,.35); }
+  .btn-roast:active{ transform:translateY(0); }
+  .btn-gold{
+    background:linear-gradient(135deg,#FFC300,#ff9d00);
+    box-shadow:0 6px 24px rgba(255,195,0,.35), inset 0 1px 0 rgba(255,255,255,.4);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-gold:hover{ transform:translateY(-2px); box-shadow:0 10px 30px rgba(255,195,0,.5); }
+  .tab-active{ background:linear-gradient(135deg,#FF4D6D,#ff2e57); color:#fff; box-shadow:0 4px 18px rgba(255,77,109,.5); }
+  .tab-idle{ background:rgba(255,255,255,.05); color:#e9dcc8; border:1px solid rgba(255,255,255,.12); }
+  .tab-idle:hover{ border-color:rgba(255,195,0,.5); color:#FFC300; }
+  input[type=range]{ accent-color:#FF4D6D; }
+  .curtain{ background:repeating-linear-gradient(90deg,#7a1027 0 26px,#a31336 26px 52px); }
+  .mic-drop{ animation:micdrop .5s ease; }
+  @keyframes micdrop{ 0%{transform:translateY(-14px) scale(.96); opacity:0} 60%{transform:translateY(3px)} 100%{transform:translateY(0); opacity:1} }
+  .article h2{ color:#FFC300; font-weight:800; font-size:1.35rem; margin:2rem 0 .75rem; }
+  .article h3{ color:#FF4D6D; font-weight:700; font-size:1.1rem; margin:1.4rem 0 .5rem; }
+  .article p, .article li{ color:#d9cfbd; line-height:1.75; margin-bottom:.9rem; }
+  .article ul{ list-style:disc; padding-left:1.4rem; }
+  .article strong{ color:#fff; }
+  .faq-item{ border:1px solid rgba(255,195,0,.25); background:rgba(255,195,0,.04); }
+  @media print{ .no-print{ display:none !important; } }
+</style>
+<script id="roastrite-roast-generator-lib">
+/* RoastRite core logic — PURE functions only.
+   No DOM, window, document, localStorage, navigator in this file.
+   Every roast is clean and good-natured: habits, style, quirks, tech, food, social.
+   Never race, religion, disability, or appearance-based cruelty.
+   `{name}` is the placeholder for the target's name. */
+
+var ROAST_BANK = [
+  /* ---- Intensity 1: Playful ---- */
+  { t: "{name}'s brain has so many tabs open, the browser is begging for mercy.", i: 1, c: "tech", unsafe: false },
+  { t: "I'd roast {name}, but my grandma said to be nice to NPCs.", i: 1, c: "quirks", unsafe: false },
+  { t: "{name} claps when the plane lands.", i: 1, c: "habits", unsafe: false },
+  { t: "If procrastination were a sport, {name} would still be warming up.", i: 1, c: "habits", unsafe: false },
+  { t: "{name}'s playlist is 90% songs they only know one line of.", i: 1, c: "habits", unsafe: false },
+  { t: "Somewhere out there, {name}'s plants are filing a complaint.", i: 1, c: "habits", unsafe: false },
+  { t: "{name} types with two fingers and zero regrets.", i: 1, c: "tech", unsafe: false },
+  { t: "I'd agree with {name}, but then we'd both be wrong.", i: 1, c: "quirks", unsafe: false },
+  { t: "{name} still says 'www dot' before website addresses.", i: 1, c: "tech", unsafe: false },
+  { t: "{name}'s idea of cardio is chasing the ice cream truck.", i: 1, c: "habits", unsafe: false },
+  { t: "Roses are red, violets are blue, {name}'s jokes need a software update.", i: 1, c: "quirks", unsafe: false },
+  { t: "{name} brings a shopping list to a restaurant.", i: 1, c: "habits", unsafe: false },
+
+  /* ---- Intensity 2: Cheeky ---- */
+  { t: "{name}'s fashion sense is what happens when the lights are off and confidence is high.", i: 2, c: "style", unsafe: false },
+  { t: "If common sense were currency, {name} would be asking for a loan.", i: 2, c: "quirks", unsafe: false },
+  { t: "{name}'s search history could power a small city.", i: 2, c: "tech", unsafe: false },
+  { t: "Some people bring joy wherever they go. {name} brings joy whenever they leave.", i: 2, c: "social", unsafe: false },
+  { t: "{name} has the WiFi password memorized but not their own phone number.", i: 2, c: "tech", unsafe: false },
+  { t: "I'd explain it to {name}, but I left my crayons at home.", i: 2, c: "quirks", unsafe: false },
+  { t: "{name}'s camera roll is 400 screenshots they'll never look at again.", i: 2, c: "tech", unsafe: false },
+  { t: "Even {name}'s autocorrect has given up on them.", i: 2, c: "tech", unsafe: false },
+  { t: "{name} irons their socks but wears mismatched shoes.", i: 2, c: "style", unsafe: false },
+  { t: "{name}'s alarm clock has trust issues, and honestly, so do we.", i: 2, c: "habits", unsafe: false },
+  { t: "They say practice makes perfect. {name} is the exception that keeps trying.", i: 2, c: "quirks", unsafe: false },
+  { t: "{name} treats their fridge like a museum: everything in it is expired.", i: 2, c: "food", unsafe: false },
+
+  /* ---- Intensity 3: Spicy ---- */
+  { t: "{name} is the human version of a 'low battery' warning.", i: 3, c: "quirks", unsafe: false },
+  { t: "Scientists are still studying how {name} burns toast in an air fryer.", i: 3, c: "food", unsafe: false },
+  { t: "{name}'s bedtime routine has more steps than their skincare — and they skip both.", i: 3, c: "habits", unsafe: false },
+  { t: "If {name} were any more laid-back, they'd need to be carried everywhere.", i: 3, c: "habits", unsafe: false },
+  { t: "{name} treats deadlines like suggestions from a stranger.", i: 3, c: "habits", unsafe: false },
+  { t: "The group chat goes quiet when {name} starts typing... and stays quiet after.", i: 3, c: "social", unsafe: false },
+  { t: "{name}'s spice tolerance ends at ketchup.", i: 3, c: "food", unsafe: false },
+  { t: "Somewhere, a barista is still waiting for {name} to decide on an order.", i: 3, c: "food", unsafe: false },
+  { t: "{name} could get lost in a one-room apartment.", i: 3, c: "quirks", unsafe: false },
+  { t: "Even Google Maps asked {name} for directions once. Once.", i: 3, c: "quirks", unsafe: false },
+  { t: "{name}'s idea of meal prep is ordering takeout in advance.", i: 3, c: "food", unsafe: false },
+  { t: "{name} has a black belt in changing the subject.", i: 3, c: "social", unsafe: false },
+
+  /* ---- Intensity 4: Bold ---- */
+  { t: "{name} has the survival instincts of a houseplant in a hurricane.", i: 4, c: "quirks", unsafe: false },
+  { t: "If {name} had a dollar for every good idea they've had, they'd owe us money.", i: 4, c: "quirks", unsafe: false },
+  { t: "{name}'s personality is 80% caffeine and 20% questionable decisions.", i: 4, c: "habits", unsafe: true },
+  { t: "I'd call {name} a tool, but tools are actually useful.", i: 4, c: "quirks", unsafe: true },
+  { t: "{name}'s brain went on vacation and forgot to send a postcard.", i: 4, c: "quirks", unsafe: true },
+  { t: "{name} is living proof that participation trophies were a mistake.", i: 4, c: "quirks", unsafe: true },
+  { t: "If multitasking were an Olympic sport, {name} would trip on the way to the podium.", i: 4, c: "habits", unsafe: false },
+  { t: "{name}'s dance moves were banned in three countries. Allegedly.", i: 4, c: "style", unsafe: false },
+  { t: "Even {name}'s reflection needs a minute before committing.", i: 4, c: "quirks", unsafe: true },
+  { t: "{name} peaks at 'loading...'.", i: 4, c: "tech", unsafe: false },
+  { t: "Somewhere there's a village missing its legend. {name} never went back.", i: 4, c: "quirks", unsafe: true },
+  { t: "{name}'s phone battery lasts longer than their attention span.", i: 4, c: "tech", unsafe: false },
+
+  /* ---- Intensity 5: Savage ---- */
+  { t: "{name} is the reason the group project needed a group project.", i: 5, c: "social", unsafe: true },
+  { t: "I'd roast {name} harder, but I don't want the fire department involved.", i: 5, c: "quirks", unsafe: false },
+  { t: "{name}'s life is a blooper reel with no director's cut.", i: 5, c: "quirks", unsafe: true },
+  { t: "Some people peak in high school. {name} is still loading.", i: 5, c: "quirks", unsafe: true },
+  { t: "{name} has two brain cells and they're both on airplane mode.", i: 5, c: "quirks", unsafe: true },
+  { t: "If {name} were a software update, everyone would click 'remind me later'.", i: 5, c: "tech", unsafe: false },
+  { t: "{name}'s playlist, wardrobe, and life choices all need a manager.", i: 5, c: "style", unsafe: true },
+  { t: "Even the GPS says 'recalculating' when {name} makes a life decision.", i: 5, c: "quirks", unsafe: true }
+];
+
+var COMEBACK_BANK = [
+  "That's the best you got? My group chat roasts harder before breakfast.",
+  "Cute. Did you practice that in the mirror or did it just come naturally?",
+  "I'd agree with you, but then we'd both be wrong — and I'm never wrong.",
+  "Nice try. I've heard better burns from a microwave.",
+  "You spent all day thinking of that? That's adorable.",
+  "I'm flattered you think about me this much.",
+  "Keep going, you're almost as funny as you think you are.",
+  "That's it? Even my autocorrect hits harder.",
+  "Thanks for the material — I'll use it in my standup set.",
+  "You roast like my WiFi works: weak and full of interruptions.",
+  "Bold words from someone whose plants are dying.",
+  "I was going to roast you back, but I don't punch down.",
+  "Good one! I'll pretend that hurt while you pretend you're funny.",
+  "Your roast needs a software update.",
+  "Aww, you brought a water gun to a bonfire.",
+  "Is that your final answer? The audience is voting no.",
+  "I'd clap back, but I'm saving my energy for your next weak attempt.",
+  "Plot twist: I liked it. Plot twist 2: I lied.",
+  "Tell that to the mirror — it's the only audience you've got.",
+  "You must be fun at parties... said no one, ever."
+];
+
+var TARGETED_COMEBACKS = [
+  { k: ["phone", "wifi", "internet", "autocorrect"], c: "At least my WiFi connects — unlike your jokes." },
+  { k: ["coffee", "caffeine"], c: "I run on caffeine; you run on bad decisions." },
+  { k: ["mirror"], c: "The mirror and I are best friends — it loves me, it just tolerates you." },
+  { k: ["plant"], c: "My plants are thriving, unlike your roast game." },
+  { k: ["alarm", "sleep", "nap", "bedtime"], c: "I woke up like this. You woke up... like that." },
+  { k: ["toast", "food", "cook", "kitchen", "meal"], c: "I may burn toast, but your roasts are burnt to a crisp." },
+  { k: ["gym", "cardio", "run", "exercise"], c: "I don't need cardio — dodging your weak roasts keeps me fit." },
+  { k: ["fashion", "style", "wardrobe", "clothes", "shoes"], c: "Funny, coming from someone dressed by a blindfold." },
+  { k: ["brain", "tab", "tabs"], c: "My tabs are open because my mind is. Yours is a blank page." }
+];
+
+function clampIntensity(level) {
+  var n = parseInt(level, 10);
+  if (isNaN(n)) return 3;
+  if (n < 1) return 1;
+  if (n > 5) return 5;
+  return n;
+}
+
+function cleanName(name) {
+  var s = String(name === undefined || name === null ? "" : name).trim();
+  return s === "" ? "Champ" : s.slice(0, 30);
+}
+
+/* All roasts at or below `intensity`; safety filter strips unsafe ones. */
+function filterRoasts(intensity, safetyOn) {
+  var max = clampIntensity(intensity);
+  var out = [];
+  for (var i = 0; i < ROAST_BANK.length; i++) {
+    var r = ROAST_BANK[i];
+    if (r.i > max) continue;
+    if (safetyOn && r.unsafe) continue;
+    out.push(r);
+  }
+  return out;
+}
+
+/* Pick one roast for `name`. Returns { text, intensity, category }. */
+function pickRoast(name, intensity, safetyOn) {
+  var pool = filterRoasts(intensity, safetyOn);
+  if (pool.length === 0) {
+    pool = filterRoasts(intensity, false);
+  }
+  var r = pool[Math.floor(Math.random() * pool.length)];
+  var who = cleanName(name);
+  var text = r.t.split("{name}").join(who);
+  return { text: text, intensity: r.i, category: r.c };
+}
+
+function intensityLabel(level) {
+  var n = clampIntensity(level);
+  if (n === 1) return "Playful";
+  if (n === 2) return "Cheeky";
+  if (n === 3) return "Spicy";
+  if (n === 4) return "Bold";
+  return "Savage";
+}
+
+/* Roast-battle scoring.
+   totalRounds: number of rounds agreed. results: array of "p1"/"p2" votes.
+   Returns { p1, p2, rounds, complete, winner } where winner is
+   "player1" | "player2" | "tie" | null (null until the battle is complete). */
+function battleScore(totalRounds, results) {
+  var rounds = parseInt(totalRounds, 10);
+  if (isNaN(rounds) || rounds < 1) rounds = 3;
+  var votes = Array.isArray(results) ? results : [];
+  var p1 = 0, p2 = 0;
+  for (var i = 0; i < votes.length; i++) {
+    if (votes[i] === "p1") p1++;
+    else if (votes[i] === "p2") p2++;
+  }
+  var complete = votes.length >= rounds;
+  var winner = null;
+  if (complete) {
+    if (p1 > p2) winner = "player1";
+    else if (p2 > p1) winner = "player2";
+    else winner = "tie";
+  }
+  return { p1: p1, p2: p2, rounds: rounds, complete: complete, winner: winner };
+}
+
+/* Comeback lines for a roast someone used on you. Always returns 4 unique lines. */
+function comebackFor(roastText) {
+  var src = String(roastText === undefined || roastText === null ? "" : roastText).toLowerCase();
+  var picked = [];
+  var used = {};
+  for (var i = 0; i < TARGETED_COMEBACKS.length && picked.length < 2; i++) {
+    var tc = TARGETED_COMEBACKS[i];
+    for (var j = 0; j < tc.k.length; j++) {
+      if (src.indexOf(tc.k[j]) !== -1) {
+        picked.push(tc.c);
+        used[tc.c] = true;
+        break;
+      }
+    }
+  }
+  var tries = 0;
+  while (picked.length < 4 && tries < 200) {
+    tries++;
+    var line = COMEBACK_BANK[Math.floor(Math.random() * COMEBACK_BANK.length)];
+    if (!used[line]) {
+      picked.push(line);
+      used[line] = true;
+    }
+  }
+  return picked;
+}
+
+</script>
+</head>
+<body class="brick min-h-screen">
+
+<!-- ======= STICKY HEADER ======= -->
+<header class="sticky top-0 z-50 border-b border-pink-500/30 bg-[#171219]/90 backdrop-blur">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
+    <a href="#top" class="font-neon text-xl sm:text-2xl neon-pink tracking-wide">ROAST<span class="neon-gold">RITE</span></a>
+    <nav class="flex items-center gap-5 text-sm font-semibold">
+      <a href="#top" class="text-amber-100/80 hover:text-[#FFC300] transition">Home</a>
+      <a href="https://fixoraa.tech" class="text-amber-100/80 hover:text-[#FFC300] transition">More Tools</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ======= HERO / NEON SIGN ======= -->
+<section class="relative overflow-hidden">
+  <div class="beam left-[8%] hidden md:block"></div>
+  <div class="beam right-[8%] hidden md:block" style="background:linear-gradient(to bottom, rgba(255,77,109,.13), transparent 75%)"></div>
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 pt-12 pb-8 text-center relative">
+    <!-- marquee bulbs -->
+    <div class="flex justify-center gap-3 mb-6 no-print" aria-hidden="true">
+      <span class="bulb" style="animation-delay:0s"></span><span class="bulb" style="animation-delay:.2s"></span>
+      <span class="bulb" style="animation-delay:.4s"></span><span class="bulb" style="animation-delay:.6s"></span>
+      <span class="bulb" style="animation-delay:.8s"></span><span class="bulb" style="animation-delay:1s"></span>
+      <span class="bulb" style="animation-delay:1.2s"></span><span class="bulb" style="animation-delay:1.4s"></span>
+    </div>
+    <p class="text-[11px] sm:text-xs tracking-[0.35em] uppercase text-[#FFC300]/90 font-bold mb-3">The Comedy Club of the Internet</p>
+    <h1 class="font-neon neon-pink neon-flicker text-4xl sm:text-6xl md:text-7xl leading-tight">ROAST<span class="neon-gold">RITE</span></h1>
+    <p class="mt-4 text-lg sm:text-xl text-amber-100/90 font-medium max-w-2xl mx-auto">Free funny roast generator with roast battles, savage-but-safe burn levels, shareable roast cards &amp; an instant comeback machine.</p>
+    <div class="mt-5 inline-flex items-center gap-2 rounded-full border border-[#FFC300]/60 bg-[#FFC300]/10 px-4 py-1.5">
+      <span class="w-2 h-2 rounded-full bg-[#FFC300] animate-pulse"></span>
+      <span class="text-sm font-bold text-[#FFC300] tracking-wide">Unlimited Free Usage</span>
+      <span class="text-xs text-amber-100/70">· no signup · no paywall</span>
+    </div>
+  </div>
+  <div class="marquee border-y border-[#FFC300]/30 bg-black/40 py-2 no-print" aria-hidden="true">
+    <div class="marquee-track font-neon text-sm text-[#FFC300]/80">
+      <span class="mx-6">★ ROAST BATTLE NIGHTLY</span><span class="mx-6">★ 100% FREE FOREVER</span><span class="mx-6">★ CLEAN BURNS ONLY</span><span class="mx-6">★ BRING YOUR BEST COMEBACK</span>
+      <span class="mx-6">★ ROAST BATTLE NIGHTLY</span><span class="mx-6">★ 100% FREE FOREVER</span><span class="mx-6">★ CLEAN BURNS ONLY</span><span class="mx-6">★ BRING YOUR BEST COMEBACK</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======= TOP AD (verbatim) ======= -->
+<div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pt-4" role="complementary" aria-label="Advertisement">
+  <div class="mx-auto text-center" style="max-width:728px">
+    <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+    <div class="flex justify-center overflow-hidden">
+      <div class="origin-top scale-[0.44] sm:scale-100 shrink-0">
+        <script>
+          atOptions = { 'key' : '4e68ac77881c17fe128a46565d9a4e8c', 'format' : 'iframe', 'height' : 90, 'width' : 728, 'params' : {} };
+        </script>
+        <script src="https://www.highrevenueformat.com/4e68ac77881c17fe128a46565d9a4e8c/invoke.js"></script>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= TOOL ======= -->
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-8">
+  <div class="stage-card rounded-2xl p-4 sm:p-8 relative overflow-hidden">
+    <div class="curtain absolute top-0 left-0 right-0 h-2 opacity-70"></div>
+
+    <!-- Tabs -->
+    <div class="flex flex-wrap gap-2 sm:gap-3 justify-center mb-6 mt-2 no-print" role="tablist">
+      <button id="tab-gen" role="tab" class="tab-active font-neon text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-full">🎤 ROAST GENERATOR</button>
+      <button id="tab-battle" role="tab" class="tab-idle font-neon text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-full">⚔️ ROAST BATTLE</button>
+      <button id="tab-comeback" role="tab" class="tab-idle font-neon text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-full">🛡️ COMEBACK CORNER</button>
+    </div>
+
+    <!-- ============ PANEL: GENERATOR ============ -->
+    <section id="panel-gen" role="tabpanel">
+      <div class="grid md:grid-cols-5 gap-6">
+        <div class="md:col-span-2 space-y-5">
+          <div>
+            <label for="gen-name" class="block text-sm font-bold text-[#FFC300] mb-1.5">Victim's name <span class="text-amber-100/50 font-normal">(optional)</span></label>
+            <input id="gen-name" type="text" maxlength="30" placeholder="e.g. Alex"
+              class="w-full rounded-xl bg-black/40 border border-pink-500/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFC300] focus:ring-2 focus:ring-[#FFC300]/30">
+          </div>
+          <div>
+            <label for="gen-intensity" class="block text-sm font-bold text-[#FFC300] mb-1.5">Intensity: <span id="intensity-label" class="text-white">Spicy (3)</span></label>
+            <input id="gen-intensity" type="range" min="1" max="5" value="3" step="1" class="w-full">
+            <div class="flex justify-between text-[11px] text-amber-100/50 font-semibold mt-1">
+              <span>1 Playful</span><span>2 Cheeky</span><span>3 Spicy</span><span>4 Bold</span><span>5 Savage</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between rounded-xl bg-black/30 border border-white/10 px-4 py-3">
+            <div>
+              <p class="text-sm font-bold text-white">Safety filter</p>
+              <p class="text-xs text-amber-100/60">Removes the edgiest burns. Keep it on for family audiences.</p>
+            </div>
+            <button id="safety-toggle" role="switch" aria-checked="true" aria-label="Safety filter"
+              class="w-12 h-7 rounded-full bg-[#FF4D6D] relative transition-colors shrink-0">
+              <span id="safety-knob" class="absolute top-1 left-6 w-5 h-5 rounded-full bg-white shadow transition-all"></span>
+            </button>
+          </div>
+          <button id="roast-btn" class="btn-roast w-full font-neon text-lg text-white rounded-xl py-4 tracking-wide">🔥 ROAST ME</button>
+          <p id="gen-msg" class="text-sm text-[#FFC300] font-semibold min-h-[1.25rem]"></p>
+        </div>
+
+        <div class="md:col-span-3">
+          <div class="gold-frame rounded-2xl bg-black/50 p-6 sm:p-8 min-h-[280px] flex flex-col justify-center relative overflow-hidden">
+            <div class="beam left-1/2 -translate-x-1/2" style="top:-160px"></div>
+            <p class="text-[10px] tracking-[0.3em] uppercase text-[#FFC300]/70 font-bold text-center mb-3">Live from the RoastRite stage</p>
+            <p id="roast-text" class="font-neon text-lg sm:text-2xl text-center leading-relaxed text-white min-h-[5rem]">Type a name, pick your heat, and hit <span class="neon-pink">ROAST ME</span>.</p>
+            <p id="roast-meta" class="text-center text-xs text-amber-100/50 mt-3"></p>
+            <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mt-6 no-print">
+              <button id="copy-btn" class="tab-idle rounded-full px-4 py-2 text-sm font-bold">📋 Copy</button>
+              <button id="png-btn" class="btn-gold rounded-full px-4 py-2 text-sm font-bold text-black">🖼️ Export PNG</button>
+              <button id="new-btn" class="tab-idle rounded-full px-4 py-2 text-sm font-bold">🎲 Another one</button>
+            </div>
+          </div>
+          <div class="mt-4">
+            <p class="text-xs font-bold tracking-widest uppercase text-amber-100/50 mb-2">Recent roasts</p>
+            <ul id="history" class="space-y-1.5 text-sm text-amber-100/70"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PANEL: BATTLE ============ -->
+    <section id="panel-battle" role="tabpanel" class="hidden">
+      <div id="battle-setup" class="max-w-2xl mx-auto space-y-5">
+        <p class="text-center text-amber-100/80">Two players. One stage. The audience decides who survives. Enter the contenders:</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label for="p1-name" class="block text-sm font-bold text-[#FF4D6D] mb-1.5">Player 1</label>
+            <input id="p1-name" type="text" maxlength="30" placeholder="e.g. Priya"
+              class="w-full rounded-xl bg-black/40 border border-pink-500/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-[#FF4D6D] focus:ring-2 focus:ring-[#FF4D6D]/30">
+          </div>
+          <div>
+            <label for="p2-name" class="block text-sm font-bold text-[#FFC300] mb-1.5">Player 2</label>
+            <input id="p2-name" type="text" maxlength="30" placeholder="e.g. Rahul"
+              class="w-full rounded-xl bg-black/40 border border-[#FFC300]/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFC300] focus:ring-2 focus:ring-[#FFC300]/30">
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 justify-center">
+          <label for="battle-rounds" class="text-sm font-bold text-amber-100/80">Rounds:</label>
+          <select id="battle-rounds" class="rounded-xl bg-black/40 border border-white/20 px-4 py-2.5 text-white font-bold focus:outline-none focus:border-[#FFC300]">
+            <option value="3">3 rounds</option>
+            <option value="5" selected>5 rounds</option>
+            <option value="7">7 rounds</option>
+          </select>
+          <label class="flex items-center gap-2 text-sm text-amber-100/70 font-semibold">
+            <input id="battle-safety" type="checkbox" checked class="w-4 h-4 accent-[#FF4D6D]"> Safety filter on
+          </label>
+        </div>
+        <button id="battle-start" class="btn-roast w-full font-neon text-lg text-white rounded-xl py-4">⚔️ START BATTLE</button>
+        <p id="battle-msg" class="text-sm text-[#FFC300] font-semibold text-center min-h-[1.25rem]"></p>
+      </div>
+
+      <div id="battle-arena" class="hidden max-w-3xl mx-auto">
+        <div class="flex items-center justify-between mb-4">
+          <div class="text-center flex-1">
+            <p id="score-p1-name" class="font-neon text-[#FF4D6D] text-lg"></p>
+            <p id="score-p1" class="font-neon text-4xl text-white">0</p>
+          </div>
+          <div class="text-center px-4">
+            <p id="round-label" class="text-xs font-bold tracking-widest uppercase text-[#FFC300]"></p>
+            <p class="font-neon text-white/40 text-xl">VS</p>
+          </div>
+          <div class="text-center flex-1">
+            <p id="score-p2-name" class="font-neon text-[#FFC300] text-lg"></p>
+            <p id="score-p2" class="font-neon text-4xl text-white">0</p>
+          </div>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4 mb-5">
+          <div class="rounded-2xl bg-black/50 border border-[#FF4D6D]/50 p-5">
+            <p class="text-xs font-bold tracking-widest uppercase text-[#FF4D6D] mb-2">Jab from <span id="jab-p1-by"></span></p>
+            <p id="jab-p1" class="text-white font-medium leading-relaxed min-h-[4.5rem]"></p>
+          </div>
+          <div class="rounded-2xl bg-black/50 border border-[#FFC300]/50 p-5">
+            <p class="text-xs font-bold tracking-widest uppercase text-[#FFC300] mb-2">Jab from <span id="jab-p2-by"></span></p>
+            <p id="jab-p2" class="text-white font-medium leading-relaxed min-h-[4.5rem]"></p>
+          </div>
+        </div>
+        <p class="text-center text-sm font-bold text-amber-100/70 mb-3 no-print">🎙️ Audience — whose jab landed harder?</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center no-print">
+          <button id="vote-p1" class="btn-roast flex-1 font-neon text-white rounded-xl py-3.5"></button>
+          <button id="vote-p2" class="btn-gold flex-1 font-neon text-black rounded-xl py-3.5"></button>
+        </div>
+        <div id="winner-banner" class="hidden mt-6 rounded-2xl gold-frame bg-black/60 p-6 text-center mic-drop">
+          <p class="text-xs tracking-[0.3em] uppercase text-[#FFC300] font-bold mb-2">🏆 Winner by audience vote 🏆</p>
+          <p id="winner-name" class="font-neon text-3xl sm:text-4xl neon-gold mb-2"></p>
+          <p id="winner-score" class="text-amber-100/80 font-semibold"></p>
+          <button id="battle-rematch" class="btn-roast mt-4 font-neon text-white rounded-xl px-8 py-3">🔁 REMATCH</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PANEL: COMEBACK ============ -->
+    <section id="panel-comeback" role="tabpanel" class="hidden">
+      <div class="max-w-2xl mx-auto space-y-5">
+        <p class="text-center text-amber-100/80">Someone roasted you? Paste their line below and get instant comebacks. Never be speechless again.</p>
+        <div>
+          <label for="comeback-input" class="block text-sm font-bold text-[#FFC300] mb-1.5">The roast they used on you</label>
+          <textarea id="comeback-input" rows="3" maxlength="500" placeholder="e.g. You burn toast in an air fryer..."
+            class="w-full rounded-xl bg-black/40 border border-[#FFC300]/40 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:border-[#FFC300] focus:ring-2 focus:ring-[#FFC300]/30"></textarea>
+        </div>
+        <button id="comeback-btn" class="btn-gold w-full font-neon text-lg text-black rounded-xl py-4">🛡️ FIRE BACK</button>
+        <p id="comeback-msg" class="text-sm text-[#FFC300] font-semibold text-center min-h-[1.25rem]"></p>
+        <div id="comeback-list" class="space-y-3"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ======= BOTTOM AD (verbatim) ======= -->
+  <div class="no-print mx-auto max-w-6xl px-4 sm:px-6 pb-4 mt-8" role="complementary" aria-label="Advertisement">
+    <div class="mx-auto text-center" style="max-width:728px">
+      <span class="block text-[10px] tracking-[0.18em] uppercase text-slate-400 mb-1.5">Advertisement</span>
+      <div class="flex justify-center overflow-hidden">
+        <script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="464498"></script>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= SEO ARTICLE ======= -->
+  <article class="article max-w-4xl mx-auto mt-10 px-1">
+    <h2>What Is a Funny Roast Generator?</h2>
+    <p>A funny roast generator is an online tool that creates playful, good-natured insults — called <strong>roasts</strong> — aimed at a friend, a rival, or even yourself. The tradition of roasting goes back decades: celebrity roast specials on television, rap battles on street corners, and the timeless art of trading jokes with friends around a campfire. A roast is not a real insult. It is a compliment wearing a disguise — a way of saying <em>"I know you well enough to tease you, and I like you enough that you know I'm joking."</em></p>
+    <p><strong>RoastRite</strong> brings that comedy-club energy to your browser. Type a name, choose how spicy you want the burn, and the generator serves up a stage-ready roast in seconds. Every roast in the RoastRite bank is written to be <strong>clean and good-natured</strong>: it teases habits, style, and quirks — things like phone addiction, questionable cooking, or a legendary talent for procrastination. It never touches race, religion, disability, or cruel appearance-based jokes. That is what makes RoastRite different from random insult generators scattered across the web, many of which recycle genuinely hurtful lines. Here, the laughs stay friendly, which means you can share every roast with confidence — in the group chat, at a party, or on stage.</p>
+
+    <h2>How RoastRite Works</h2>
+    <p>Using RoastRite takes about ten seconds. Enter a name (or leave it blank and we'll roast a mysterious "Champ"), drag the <strong>intensity slider</strong> from Playful (1) to Savage (5), and press the big red <strong>ROAST ME</strong> button. Instantly, a roast appears on the virtual stage under a spotlight, styled like a comedy-club marquee. Don't like the line? Hit <strong>"Another one"</strong> for a fresh roast at the same intensity. Love it? Copy it to your clipboard or export it as a <strong>PNG image card</strong> you can post anywhere.</p>
+    <p>Behind the scenes, every roast is tagged with an intensity level from 1 to 5 and a category — habits, style, quirks, tech, food, or social. When you pick intensity 2, the generator only draws from roasts rated 2 or below, so the heat always matches your mood. A toggleable <strong>safety filter</strong> removes the edgiest burns from the pool, which is perfect when kids, colleagues, or grandparents are in the audience. Your recent roasts are saved in your browser (nothing ever leaves your device), so you can revisit your greatest hits from the history list below the stage.</p>
+
+    <h2>The Roast Battle Game: Turn Friends Into Rivals</h2>
+    <p>The <strong>roast battle game</strong> is where RoastRite truly shines. A roast battle is a head-to-head comedy duel: two players trade jokes while an audience votes on who landed the hardest punchline. It is the format made famous by televised roast battles and comedy-club competitions — and now you can run one anywhere with nothing but a phone and two willing victims.</p>
+    <p>Here's how to play on RoastRite. Enter both players' names, choose 3, 5, or 7 rounds, and press <strong>START BATTLE</strong>. Each round, both players get a jab: Player 1's jab targets Player 2, and Player 2's jab targets Player 1. The audience — your friends, your followers, or the people sitting on your couch — votes on whose jab landed harder by tapping a name. The scoreboard updates in real time, round by round, building the tension like a real title fight. When the final round ends, RoastRite declares the <strong>winner by audience vote</strong>, complete with a trophy banner. Tied? The tool calls it honestly — a draw — and offers an instant <strong>rematch</strong> button to settle the score.</p>
+    <p>Roast battles make fantastic party games, icebreakers for new teams, and content for streamers: put the battle on screen and let chat vote. Because every roast is clean by default, the game stays fun for mixed company — no awkward lines that kill the mood.</p>
+
+    <h2>Intensity Slider: From Playful to Savage</h2>
+    <p>Not every roast fits every moment. A gentle tease for your grandmother's birthday is very different from a full-send burn for your best friend who just beat you at video games. That's why RoastRite gives you an <strong>intensity slider</strong> with five clearly labeled levels:</p>
+    <ul>
+      <li><strong>1 — Playful:</strong> Feather-light teasing. Safe for kids, coworkers, and anyone you just met. Think "claps when the plane lands" energy.</li>
+      <li><strong>2 — Cheeky:</strong> A little mischief. Great for siblings and close friends who can take a joke.</li>
+      <li><strong>3 — Spicy:</strong> The comedy-club sweet spot. Punchy lines about habits and quirks with real sting but zero cruelty.</li>
+      <li><strong>4 — Bold:</strong> Heavyweight material. Best reserved for best friends and roast-battle finals.</li>
+      <li><strong>5 — Savage:</strong> Maximum heat. Only for people who have explicitly asked to be destroyed — lovingly.</li>
+    </ul>
+    <p>The rule of thumb comedians use applies here too: <strong>match the roast to the relationship</strong>. Roast up, never down — tease people who can laugh with you, and always read the room. The slider makes that judgment call easy: when in doubt, start at 2 and work your way up.</p>
+
+    <h2>The Safety Filter: Funny Without Being Mean</h2>
+    <p>The line between a roast and an insult is <strong>consent and kindness</strong>. RoastRite's safety filter exists to keep every session on the right side of that line. When the filter is on (it is on by default), the generator excludes the edgiest burns from the pool, leaving only roasts that tease universal, harmless quirks — phone habits, cooking disasters, fashion choices, procrastination.</p>
+    <p>Just as important is what the RoastRite bank <strong>never contains</strong>. There are no roasts about race, ethnicity, religion, disability, body shaming, or appearance-based cruelty — not at any intensity level. This is a deliberate design choice. The funniest roasts in comedy history work because they're <em>specific and true</em>, not because they're cruel. "Your camera roll is 400 screenshots you'll never look at again" lands because everyone recognizes it. Cruelty, on the other hand, just makes the audience uncomfortable — and uncomfortable audiences don't laugh.</p>
+    <p>For parents and teachers, the safety filter makes RoastRite a genuinely family-friendly game. For everyone else, it's a one-tap way to keep a roast battle fun when the crowd is mixed. Turn it off only when everyone in the room has agreed they want the gloves off — and even then, the bank stays clean.</p>
+
+    <h2>Comeback Generator: Never Be Speechless Again</h2>
+    <p>Every roaster eventually gets roasted. That frozen moment — someone lands a perfect burn and your mind goes completely blank — is universal. The <strong>comeback generator</strong> is your escape hatch. Paste the roast someone used on you into the Comeback Corner, hit <strong>FIRE BACK</strong>, and RoastRite serves up four ready-made comeback lines.</p>
+    <p>The comebacks aren't random filler. The generator scans the roast you received for keywords and picks <strong>targeted responses</strong> when it can: roasted about your phone habits? You'll get a line about WiFi. Roasted about cooking? There's a burnt-toast rebuttal with your name on it. The rest of the set is drawn from a bank of all-purpose comebacks — confident, funny, and clean — so you always have something sharp to say. Each comeback has its own copy button, so you can fire back in the group chat within seconds.</p>
+    <p>Pro tip from battle-tested roasters: the best comeback is often the shortest one. Confidence beats complexity. Deliver your line, smile, and drop the mic — metaphorically, please.</p>
+
+    <h2>Why Clean Roasting Wins Online</h2>
+    <p>If you plan to share your roasts — and RoastRite's PNG export cards make that tempting — clean roasting isn't just nicer, it's <strong>strategically smarter</strong>. Social platforms reward content that everyone can enjoy and punish content that targets protected characteristics. A clever, clean roast can travel across group chats, classrooms, and offices without anyone feeling attacked. A cruel one gets you muted, reported, or uninvited.</p>
+    <p>Clean roasting is also simply harder and therefore more impressive. Anybody can be mean; it takes wit to be funny about someone's 400 unopened screenshots. The constraints force creativity, and audiences can feel the difference. That's why the best roast-battle champions in comedy history are known for precision, not cruelty — they find the true, specific, hilarious detail and aim exactly there. RoastRite's bank is built on that philosophy: every line teases something the target will <em>recognize and laugh at</em>, because the best roasts are the ones the victim repeats themselves.</p>
+
+    <h2>Tips for Winning a Roast Battle</h2>
+    <ul>
+      <li><strong>Know your opponent.</strong> The best jabs are specific. Generic burns get polite laughs; personal ones get roars.</li>
+      <li><strong>Punch up the energy, not down the person.</strong> Tease habits and choices, never identity.</li>
+      <li><strong>Keep it short.</strong> One sharp line beats a three-paragraph setup every time.</li>
+      <li><strong>React to the room.</strong> If a line lands, ride the wave. If it doesn't, move on fast — confidence covers everything.</li>
+      <li><strong>Take it as well as you dish it.</strong> Laughing at a good roast aimed at you is the ultimate power move — and it wins audience votes.</li>
+      <li><strong>End with a handshake.</strong> Every great roast battle ends with both players laughing. The rivalry is the show; the friendship is real.</li>
+    </ul>
+
+    <h2>Sharing Your Roasts as Image Cards</h2>
+    <p>A great roast deserves a great stage. RoastRite's <strong>PNG export</strong> renders your roast as a shareable image card — dark comedy-club background, neon RoastRite branding, and your burn in bold display type — sized perfectly for social feeds and stories. One tap downloads the card to your device; from there it goes straight to Instagram, WhatsApp status, X, or the group chat. Because the cards are generated entirely in your browser, there's no watermark, no signup wall, and no waiting. Just roast, export, and post. And with <strong>unlimited free usage</strong>, you can generate as many cards as your friendships can survive.</p>
+  </article>
+
+  <!-- ======= FAQs ======= -->
+  <section class="max-w-4xl mx-auto mt-10 px-1">
+    <h2 class="text-2xl font-extrabold text-[#FFC300] mb-5">Frequently Asked Questions</h2>
+    <div class="space-y-3">
+      <div class="faq-item rounded-xl p-4">
+        <h3 class="font-bold text-white">What is a roast battle?</h3>
+        <p class="text-amber-100/75 mt-1 text-sm leading-relaxed">A roast battle is a head-to-head comedy game where two players trade funny, good-natured insults while an audience votes on who landed the best lines. On RoastRite, you enter two names, pick 3, 5, or 7 rounds, and the audience taps a name each round to vote. The scoreboard tracks every round and a winner is declared at the end.</p>
+      </div>
+      <div class="faq-item rounded-xl p-4">
+        <h3 class="font-bold text-white">Is the RoastRite roast generator really free?</h3>
+        <p class="text-amber-100/75 mt-1 text-sm leading-relaxed">Yes — completely free with unlimited usage. There is no signup, no paywall, no watermark on exported PNG cards, and no limit on how many roasts, battles, or comebacks you generate. Everything runs in your browser.</p>
+      </div>
+      <div class="faq-item rounded-xl p-4">
+        <h3 class="font-bold text-white">How does the safety filter work?</h3>
+        <p class="text-amber-100/75 mt-1 text-sm leading-relaxed">The safety filter removes the edgiest burns from the roast pool, leaving only gentle, family-friendly teasing. It is on by default. The entire roast bank is also written to be clean — it only jokes about habits, style, and quirks, and never about race, religion, disability, or appearance-based cruelty.</p>
+      </div>
+      <div class="faq-item rounded-xl p-4">
+        <h3 class="font-bold text-white">Can I share roasts as images?</h3>
+        <p class="text-amber-100/75 mt-1 text-sm leading-relaxed">Yes. Every roast can be exported as a PNG image card with one tap — styled like a neon comedy-club marquee, sized for social feeds and stories. The download has no watermark and is free to post anywhere.</p>
+      </div>
+      <div class="faq-item rounded-xl p-4">
+        <h3 class="font-bold text-white">What makes a good comeback?</h3>
+        <p class="text-amber-100/75 mt-1 text-sm leading-relaxed">Short, confident, and specific beats long and complicated. A good comeback acknowledges the roast without getting defensive, then flips it with humor. RoastRite's comeback generator gives you four options per roast — including targeted lines that reference the original burn — so you can pick the one that fits your style.</p>
+      </div>
+      <div class="faq-item rounded-xl p-4">
+        <h3 class="font-bold text-white">Do I need an account to use RoastRite?</h3>
+        <p class="text-amber-100/75 mt-1 text-sm leading-relaxed">No account needed. Open the page and start roasting. Your recent roasts are saved privately in your own browser's local storage so you can revisit them — nothing is uploaded anywhere.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="border-t border-pink-500/20 mt-12">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <p class="font-neon neon-pink text-lg">ROAST<span class="neon-gold">RITE</span></p>
+    <p class="text-xs text-amber-100/50 text-center">Clean roasts only. Roast the habit, love the human.<br>Unlimited free usage — no signup, no paywall.</p>
+    <nav class="flex gap-5 text-sm font-semibold">
+      <a href="#top" class="text-amber-100/70 hover:text-[#FFC300]">Home</a>
+      <a href="https://fixoraa.tech" class="text-amber-100/70 hover:text-[#FFC300]">More Tools</a>
+    </nav>
+  </div>
+</footer>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a roast battle?",
+      "acceptedAnswer": { "@type": "Answer", "text": "A roast battle is a head-to-head comedy game where two players trade funny, good-natured insults while an audience votes on who landed the best lines. On RoastRite, you enter two names, pick 3, 5, or 7 rounds, and the audience taps a name each round to vote. The scoreboard tracks every round and a winner is declared at the end." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is the RoastRite roast generator really free?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes — completely free with unlimited usage. There is no signup, no paywall, no watermark on exported PNG cards, and no limit on how many roasts, battles, or comebacks you generate. Everything runs in your browser." }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the safety filter work?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The safety filter removes the edgiest burns from the roast pool, leaving only gentle, family-friendly teasing. It is on by default. The entire roast bank is also written to be clean — it only jokes about habits, style, and quirks, and never about race, religion, disability, or appearance-based cruelty." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I share roasts as images?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Every roast can be exported as a PNG image card with one tap — styled like a neon comedy-club marquee, sized for social feeds and stories. The download has no watermark and is free to post anywhere." }
+    },
+    {
+      "@type": "Question",
+      "name": "What makes a good comeback?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Short, confident, and specific beats long and complicated. A good comeback acknowledges the roast without getting defensive, then flips it with humor. RoastRite's comeback generator gives you four options per roast — including targeted lines that reference the original burn — so you can pick the one that fits your style." }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need an account to use RoastRite?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No account needed. Open the page and start roasting. Your recent roasts are saved privately in your own browser's local storage so you can revisit them — nothing is uploaded anywhere." }
+    }
+  ]
+}
+</script>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* ---------- tabs ---------- */
+  var tabs = [["tab-gen","panel-gen"],["tab-battle","panel-battle"],["tab-comeback","panel-comeback"]];
+  tabs.forEach(function(pair){
+    $(pair[0]).addEventListener("click", function(){
+      tabs.forEach(function(p){
+        $(p[1]).classList.add("hidden");
+        $(p[0]).classList.remove("tab-active"); $(p[0]).classList.add("tab-idle");
+      });
+      $(pair[1]).classList.remove("hidden");
+      $(pair[0]).classList.remove("tab-idle"); $(pair[0]).classList.add("tab-active");
+    });
+  });
+
+  /* ---------- safety toggle ---------- */
+  var safetyOn = true;
+  $("safety-toggle").addEventListener("click", function(){
+    safetyOn = !safetyOn;
+    var btn = $("safety-toggle");
+    btn.setAttribute("aria-checked", safetyOn ? "true" : "false");
+    btn.classList.toggle("bg-[#FF4D6D]", safetyOn);
+    btn.classList.toggle("bg-white/20", !safetyOn);
+    $("safety-knob").style.left = safetyOn ? "1.5rem" : "0.25rem";
+  });
+
+  /* ---------- intensity label ---------- */
+  $("gen-intensity").addEventListener("input", function(){
+    var v = parseInt($("gen-intensity").value, 10);
+    $("intensity-label").textContent = intensityLabel(v) + " (" + v + ")";
+  });
+
+  /* ---------- history (localStorage) ---------- */
+  function getHistory(){
+    try { return JSON.parse(localStorage.getItem("roastrite-history") || "[]"); }
+    catch(e){ return []; }
+  }
+  function pushHistory(name, text){
+    try{
+      var h = getHistory();
+      h.unshift({ n: name, t: text, at: Date.now() });
+      h = h.slice(0, 8);
+      localStorage.setItem("roastrite-history", JSON.stringify(h));
+      renderHistory();
+    }catch(e){}
+  }
+  function renderHistory(){
+    var h = getHistory(), ul = $("history");
+    ul.innerHTML = "";
+    h.forEach(function(item){
+      var li = document.createElement("li");
+      li.className = "truncate rounded-lg bg-black/30 border border-white/10 px-3 py-1.5";
+      li.title = item.t;
+      li.textContent = "\uD83D\uDD25 " + item.n + ": " + item.t;
+      ul.appendChild(li);
+    });
+    if (h.length === 0){
+      var li = document.createElement("li");
+      li.className = "text-amber-100/40 italic";
+      li.textContent = "No roasts yet — the stage is waiting.";
+      ul.appendChild(li);
+    }
+  }
+
+  /* ---------- generator ---------- */
+  var lastRoast = null;
+  function doRoast(){
+    var name = $("gen-name").value;
+    var intensity = parseInt($("gen-intensity").value, 10);
+    var r = pickRoast(name, intensity, safetyOn);
+    lastRoast = r;
+    var el = $("roast-text");
+    el.textContent = "\u201C" + r.text + "\u201D";
+    el.classList.remove("mic-drop"); void el.offsetWidth; el.classList.add("mic-drop");
+    $("roast-meta").textContent = intensityLabel(r.intensity) + " \u00B7 " + r.category + " \u00B7 safety " + (safetyOn ? "on" : "off");
+    $("gen-msg").textContent = "";
+    pushHistory(cleanName(name), r.text);
+  }
+  $("roast-btn").addEventListener("click", doRoast);
+  $("new-btn").addEventListener("click", doRoast);
+  $("gen-name").addEventListener("keydown", function(e){ if(e.key === "Enter") doRoast(); });
+
+  function copyText(txt, msgEl, okMsg){
+    function done(){ msgEl.textContent = okMsg; setTimeout(function(){ msgEl.textContent = ""; }, 2500); }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done, function(){ fallback(); });
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement("textarea");
+      ta.value = txt; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch(e){}
+      document.body.removeChild(ta); done();
+    }
+  }
+  $("copy-btn").addEventListener("click", function(){
+    if (!lastRoast){ $("gen-msg").textContent = "Roast someone first, then copy the burn."; return; }
+    copyText(lastRoast.text, $("gen-msg"), "Copied — go make someone laugh.");
+  });
+
+  /* ---------- PNG export ---------- */
+  function wrapText(ctx, text, maxW){
+    var words = text.split(" "), lines = [], line = "";
+    words.forEach(function(w){
+      var test = line ? line + " " + w : w;
+      if (ctx.measureText(test).width > maxW && line){ lines.push(line); line = w; }
+      else { line = test; }
+    });
+    if (line) lines.push(line);
+    return lines;
+  }
+  $("png-btn").addEventListener("click", function(){
+    if (!lastRoast){ $("gen-msg").textContent = "Generate a roast first, then export it as a card."; return; }
+    var W = 1200, H = 630;
+    var c = document.createElement("canvas"); c.width = W; c.height = H;
+    var ctx = c.getContext("2d");
+    var g = ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0,"#221724"); g.addColorStop(1,"#171219");
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+    /* brick hints */
+    ctx.strokeStyle = "rgba(255,77,109,0.10)"; ctx.lineWidth = 2;
+    for (var y = 60; y < H; y += 58){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    /* neon frame */
+    ctx.strokeStyle = "#FF4D6D"; ctx.lineWidth = 6; ctx.shadowColor = "#FF4D6D"; ctx.shadowBlur = 30;
+    ctx.strokeRect(28,28,W-56,H-56);
+    ctx.strokeStyle = "#FFC300"; ctx.lineWidth = 3; ctx.shadowColor = "#FFC300"; ctx.shadowBlur = 18;
+    ctx.strokeRect(48,48,W-96,H-96);
+    ctx.shadowBlur = 0;
+    /* brand */
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#FFC300"; ctx.shadowColor = "#FFC300"; ctx.shadowBlur = 24;
+    ctx.font = "700 54px Bungee, sans-serif";
+    ctx.fillText("ROASTRITE", W/2, 150);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(245,239,230,0.6)";
+    ctx.font = "600 22px Inter, sans-serif";
+    ctx.fillText("LIVE FROM THE COMEDY CLUB", W/2, 192);
+    /* roast text */
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 44px Inter, sans-serif";
+    var lines = wrapText(ctx, "\u201C" + lastRoast.text + "\u201D", W - 260);
+    var startY = 300 - (lines.length - 1) * 30;
+    lines.forEach(function(ln, idx){ ctx.fillText(ln, W/2, startY + idx * 60); });
+    /* footer */
+    ctx.fillStyle = "#FF4D6D"; ctx.shadowColor = "#FF4D6D"; ctx.shadowBlur = 14;
+    ctx.font = "700 26px Inter, sans-serif";
+    ctx.fillText(intensityLabel(lastRoast.intensity).toUpperCase() + " \u00B7 UNLIMITED FREE USAGE", W/2, H - 90);
+    ctx.shadowBlur = 0;
+    var a = document.createElement("a");
+    a.download = "roastrite-roast.png";
+    a.href = c.toDataURL("image/png");
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    $("gen-msg").textContent = "Card downloaded — post it everywhere.";
+  });
+
+  /* ---------- battle ---------- */
+  var battle = null;
+  function startBattle(){
+    var p1 = cleanName($("p1-name").value), p2 = cleanName($("p2-name").value);
+    if ($("p1-name").value.trim() === "" || $("p2-name").value.trim() === ""){
+      $("battle-msg").textContent = "Both players need names to enter the ring.";
+      return;
+    }
+    if (p1.toLowerCase() === p2.toLowerCase()){
+      $("battle-msg").textContent = "Two different fighters needed — give them different names.";
+      return;
+    }
+    var rounds = parseInt($("battle-rounds").value, 10);
+    var bsafe = $("battle-safety").checked;
+    battle = { p1: p1, p2: p2, rounds: rounds, safety: bsafe, results: [], round: 1 };
+    $("battle-msg").textContent = "";
+    $("battle-setup").classList.add("hidden");
+    $("battle-arena").classList.remove("hidden");
+    $("winner-banner").classList.add("hidden");
+    renderRound();
+  }
+  function renderRound(){
+    var b = battle;
+    $("score-p1-name").textContent = b.p1;
+    $("score-p2-name").textContent = b.p2;
+    $("round-label").textContent = "Round " + b.round + " of " + b.rounds;
+    var inten = 2 + Math.floor(Math.random() * 3) + 1; /* battles run hot: 3-5 */
+    if (inten > 5) inten = 5;
+    var jabA = pickRoast(b.p2, inten, b.safety); /* A's jab targets B */
+    var jabB = pickRoast(b.p1, inten, b.safety); /* B's jab targets A */
+    $("jab-p1-by").textContent = b.p1;
+    $("jab-p2-by").textContent = b.p2;
+    var j1 = $("jab-p1"), j2 = $("jab-p2");
+    j1.textContent = "\u201C" + jabA.text + "\u201D";
+    j2.textContent = "\u201C" + jabB.text + "\u201D";
+    [j1,j2].forEach(function(el){ el.classList.remove("mic-drop"); void el.offsetWidth; el.classList.add("mic-drop"); });
+    $("vote-p1").textContent = "\uD83C\uDF99\uFE0F " + b.p1 + " TAKES IT";
+    $("vote-p2").textContent = "\uD83C\uDF99\uFE0F " + b.p2 + " TAKES IT";
+    var s = battleScore(b.rounds, b.results);
+    $("score-p1").textContent = s.p1;
+    $("score-p2").textContent = s.p2;
+  }
+  function vote(who){
+    if (!battle) return;
+    battle.results.push(who);
+    var s = battleScore(battle.rounds, battle.results);
+    $("score-p1").textContent = s.p1;
+    $("score-p2").textContent = s.p2;
+    if (s.complete){
+      var name = s.winner === "player1" ? battle.p1 : s.winner === "player2" ? battle.p2 : null;
+      $("winner-name").textContent = name ? name + "!" : "IT'S A DRAW!";
+      $("winner-score").textContent = name
+        ? "Final score " + s.p1 + " \u2013 " + s.p2 + " after " + s.rounds + " rounds. The crowd has spoken."
+        : "Dead even at " + s.p1 + " \u2013 " + s.p2 + ". Legends. Rematch?";
+      var wb = $("winner-banner");
+      wb.classList.remove("hidden"); void wb.offsetWidth; wb.classList.add("mic-drop");
+      wb.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } else {
+      battle.round++;
+      renderRound();
+    }
+  }
+  $("battle-start").addEventListener("click", startBattle);
+  $("vote-p1").addEventListener("click", function(){ vote("p1"); });
+  $("vote-p2").addEventListener("click", function(){ vote("p2"); });
+  $("battle-rematch").addEventListener("click", function(){
+    $("battle-arena").classList.add("hidden");
+    $("battle-setup").classList.remove("hidden");
+    battle = null;
+  });
+
+  /* ---------- comebacks ---------- */
+  $("comeback-btn").addEventListener("click", function(){
+    var input = $("comeback-input").value.trim();
+    if (input === ""){
+      $("comeback-msg").textContent = "Paste the roast they hit you with first.";
+      return;
+    }
+    $("comeback-msg").textContent = "";
+    var lines = comebackFor(input);
+    var list = $("comeback-list");
+    list.innerHTML = "";
+    lines.forEach(function(line, idx){
+      var div = document.createElement("div");
+      div.className = "rounded-xl bg-black/40 border border-[#FFC300]/40 p-4 flex items-start gap-3 mic-drop";
+      div.style.animationDelay = (idx * 0.08) + "s";
+      var p = document.createElement("p");
+      p.className = "flex-1 text-white font-medium leading-relaxed";
+      p.textContent = line;
+      var btn = document.createElement("button");
+      btn.className = "tab-idle rounded-full px-3 py-1.5 text-xs font-bold shrink-0 no-print";
+      btn.textContent = "\uD83D\uDCCB Copy";
+      btn.addEventListener("click", function(){
+        copyText(line, $("comeback-msg"), "Comeback copied — deliver it with confidence.");
+      });
+      div.appendChild(p); div.appendChild(btn);
+      list.appendChild(div);
+    });
+  });
+
+  renderHistory();
+})();
+</script>
+</body>
+</html>
